@@ -78,8 +78,8 @@
   #chat-box {
     border: 1px #000 solid;
     padding: 0 0 0 5px;
-    min-height: 157px;
-    max-height: 225px;
+    min-height: 357px;
+    max-height: 425px;
     overflow: scroll;
   }
   

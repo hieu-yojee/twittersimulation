@@ -14,6 +14,7 @@ defmodule TwitterSimulation.Application do
       supervisor(TwitterSimulationWeb.Endpoint, []),
       # Start your own worker by calling: TwitterSimulation.Worker.start_link(arg1, arg2, arg3)
       # worker(TwitterSimulation.Worker, [arg1, arg2, arg3]),
+      worker(TwitterSimulationWeb.Monitor, [%{}]),
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html

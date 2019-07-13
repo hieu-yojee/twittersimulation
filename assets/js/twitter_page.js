@@ -24,7 +24,15 @@ let TwitterPage = {
         let chatBox = document.querySelector('#chat-box')
         let msgBlock = document.createElement('p')
   
-        msgBlock.insertAdjacentHTML('beforeend', `${payload.body}`)
+        msgBlock.insertAdjacentHTML('beforeend', `${payload.id} -> ${payload.msg}`)
+        chatBox.appendChild(msgBlock)
+      })
+
+      channel.on('twitter:joined', payload => {
+        let chatBox = document.querySelector('#chat-box')
+        let msgBlock = document.createElement('p')
+  
+        msgBlock.insertAdjacentHTML('beforeend', `${payload.msg}`) 
         chatBox.appendChild(msgBlock)
       })
     }

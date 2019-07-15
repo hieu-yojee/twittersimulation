@@ -16,7 +16,7 @@ let TwitterPage = {
       document.getElementById('retweet-btn').addEventListener('click', function(e){
         e.preventDefault()
         let tweetId = document.getElementById('tweet-id').value
-        channel.push('retweet', {body: tweetId})
+        channel.push('retweet', {id: tweetId, body: "origin tweet will be got by frontend!"})
         document.getElementById('tweet-id').value = ''
       })
   

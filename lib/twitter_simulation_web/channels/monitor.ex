@@ -3,43 +3,44 @@ defmodule TwitterSimulationWeb.Monitor do
     Agent.start_link(fn -> initial_state end, name: __MODULE__)
   end
 
-  def get_top_tweets() do
-    Agent.get(__MODULE__, fn state -> get_top_tweets(state[:tweets]) end)
+  def tweet(tweet_msg) do
+    Agent.get_and_update(__MODULE__, fn state -> tweet(state, tweet_msg) end)
   end
 
-  def tweet(tweet) do
-    Agent.get_and_update(__MODULE__, fn state -> tweet(state, tweet) end)
+  def retweet(tweet_id) do
+    Agent.get_and_update(__MODULE__, fn state -> retweet(state, tweet_id) end)
   end
 
-  def retweet(retweet) do
-    Agent.get_and_update(__MODULE__, fn state -> retweet(state, retweet) end)
+  def get_top_tweets(num) do
+    Agent.get(__MODULE__, fn state -> get_top_tweets(state[:tweet_logs], num) end)
   end
 
-  defp get_top_tweets(nil) do
+  defp get_top_tweets(nil, _) do
   end
 
-  defp get_top_tweets(tweets) do
-    tweets
-    |> Enum.map(fn {key, value} -> {key, value[:tweet], value[:retweet]} end)
-    |> Enum.sort_by(fn {_, _, retweet} -> retweet end, &>=/2)
-    |> Enum.take(2)
+  defp get_top_tweets(tweet_logs, num) do
+    tweet_logs
+    |> Enum.map(fn {id, tweet_log_val} -> {id, tweet_log_val[:tweet_msg], tweet_log_val[:retweet_num]} end)
+    |> Enum.sort_by(fn {_, _, retweet_num} -> retweet_num end, &>=/2)
+    |> Enum.take(num)
   end
 
-  defp tweet(%{counter: counter, tweets: tweets}, tweet) do
+  defp tweet(%{counter: counter, tweet_logs: tweet_logs}, tweet_msg) do
     new_counter = counter + 1
-    new_tweet = %{tweet: tweet, retweet: 0}
-    new_tweets = Map.put(tweets, new_counter, new_tweet)
+    tweet_log_val = %{tweet_msg: tweet_msg, retweet_num: 0}
+    new_tweet_logs = Map.put(tweet_logs, new_counter, tweet_log_val)
 
-    {{new_counter, new_tweet}, %{counter: new_counter, tweets: new_tweets}}
+    {{new_counter, tweet_log_val}, %{counter: new_counter, tweet_logs: new_tweet_logs}}
   end
 
-  defp tweet(state, tweet) do
-    new_tweet = %{tweet: tweet, retweet: 0}
-    {{0, new_tweet}, %{counter: 0, tweets: %{0 => new_tweet}}}
+  defp tweet(_state, tweet_msg) do
+    tweet_log_val = %{tweet_msg: tweet_msg, retweet_num: 0}
+    first_tweet_logs = %{0 => tweet_log_val}
+    {{0, tweet_log_val}, %{counter: 0, tweet_logs: first_tweet_logs}}
   end
 
-  defp retweet(state, retweet) do
-    new_state = update_in(state, [:tweets, String.to_integer(retweet), :retweet], &(&1 + 1))
-    tweet(new_state, state[:tweets][String.to_integer(retweet)][:tweet])
+  defp retweet(state, tweet_id) do
+    update_in(state, [:tweet_logs, tweet_id, :retweet_num], &(&1 + 1))
+    |> tweet(state[:tweet_logs][tweet_id][:tweet_msg])
   end
 end

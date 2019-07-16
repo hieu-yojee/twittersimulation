@@ -1,28 +1,49 @@
 defmodule TwitterSimulationWeb.TweetContainer do
+  use GenServer
   alias TwitterSimulationWeb.TopTweetContainer
 
-  def start_link(initial_state) do
-    Agent.start_link(fn -> initial_state end, name: __MODULE__)
+  def start_link() do
+    GenServer.start_link(__MODULE__, nil, name: __MODULE__)
+  end
+
+  def init(_) do
+    :ets.new(__MODULE__, [:named_table, :protected, write_concurrency: true])
+    {:ok, nil}
   end
 
   def tweet(tweet_id_msg) do
-    Agent.cast(__MODULE__, &tweet(&1, tweet_id_msg))
+    GenServer.cast(__MODULE__, {:tweet, tweet_id_msg})
   end
 
   def retweet(tweet_ids) do
-    Agent.cast(__MODULE__, &retweet(&1, tweet_ids))
+    GenServer.cast(__MODULE__, {:retweet, tweet_ids})
   end
 
-  defp tweet(state, {id, tweet_msg}) do
-    Map.put(state, id, {tweet_msg, 0})
+  def handle_cast({:tweet, tweet_id_msg}, state) do
+    tweet(state, tweet_id_msg)
+    {:noreply, state}
   end
 
-  defp retweet(state, {new_id, origin_id}) do
-    {origin_msg, retweet_num} = Map.get(state, origin_id)
-    new_retweet_num = retweet_num + 1
-    TopTweetContainer.retweet({origin_id, origin_msg, new_retweet_num})
+  def handle_cast({:retweet, tweet_ids}, state) do
+    retweet(state, tweet_ids)
+    {:noreply, state}
+  end
 
-    Map.update!(state, origin_id, fn _ -> {origin_msg, new_retweet_num} end)
-    |> tweet({new_id, origin_msg})
+  def handle_info(_message, state) do
+    {:ok, state}
+  end
+
+  defp handle_tweet(_state, {id, tweet_msg}) do
+    :ets.insert(__MODULE__, {id, {tweet_msg, 0}})
+  end
+
+  defp handle_retweet(state, {new_id, origin_id}) do
+    case :ets.lookup(__MODULE__, origin_id) do
+      [{^origin_id, {origin_msg, retweet_num}}] ->
+        TopTweetContainer.retweet({origin_id, origin_msg, retweet_num + 1})
+        :ets.insert(__MODULE__, {origin_id, {origin_msg, retweet_num + 1}})
+        handle_tweet(state, {new_id, origin_msg})
+      [] -> nil
+    end
   end
 end

@@ -20,12 +20,12 @@ defmodule TwitterSimulationWeb.TweetContainer do
   end
 
   def handle_cast({:tweet, tweet_id_msg}, state) do
-    tweet(state, tweet_id_msg)
+    handle_tweet(state, tweet_id_msg)
     {:noreply, state}
   end
 
   def handle_cast({:retweet, tweet_ids}, state) do
-    retweet(state, tweet_ids)
+    handle_retweet(state, tweet_ids)
     {:noreply, state}
   end
 
